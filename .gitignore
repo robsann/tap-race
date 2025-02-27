@@ -1,3 +1,4 @@
 .idea/
 myapp/.buildozer/
+myapp/__pycache__/
 myapp/bin/
