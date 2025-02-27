@@ -1,0 +1,13 @@
+creating build/temp.linux-x86_64-3.11/build
+creating build/temp.linux-x86_64-3.11/build/temp.linux-x86_64-3.11
+/home/robson/.buildozer/android/platform/android-ndk-r25b/toolchains/llvm/prebuilt/linux-x86_64/bin/clang -target aarch64-linux-android21 -fomit-frame-pointer -march=armv8-a -fPIC -Wsign-compare -DNDEBUG -g -fwrapv -O3 -Wall -target aarch64-linux-android21 -fomit-frame-pointer -march=armv8-a -fPIC -I/home/robson/Sandbox/PyCharm/Apps/tap-race/myapp/.buildozer/android/platform/build-arm64-v8a_armeabi-v7a/build/other_builds/python3/arm64-v8a__ndk_target_21/python3/Include -DANDROID -I/home/robson/.buildozer/android/platform/android-ndk-r25b/toolchains/llvm/prebuilt/linux-x86_64/sysroot/usr/include -I/home/robson/Sandbox/PyCharm/Apps/tap-race/myapp/.buildozer/android/platform/build-arm64-v8a_armeabi-v7a/build/python-installs/taprace/arm64-v8a/include/python3.1 -fPIC -I/home/robson/Sandbox/PyCharm/Apps/tap-race/myapp/.buildozer/android/platform/build-arm64-v8a_armeabi-v7a/build/other_builds/hostpython3/desktop/hostpython3/Include -I/home/robson/Sandbox/PyCharm/Apps/tap-race/myapp/.buildozer/android/platform/build-arm64-v8a_armeabi-v7a/build/other_builds/hostpython3/desktop/hostpython3/native-build -c build/temp.linux-x86_64-3.11/conftest-0.c -o build/temp.linux-x86_64-3.11/build/temp.linux-x86_64-3.11/conftest-0.o
+build/temp.linux-x86_64-3.11/conftest-0.c:8:21: warning: implicit declaration of function 'getifaddrs' is invalid in C99 [-Wimplicit-function-declaration]
+              ret = getifaddrs(&addrs);
+                    ^
+build/temp.linux-x86_64-3.11/conftest-0.c:9:15: warning: implicit declaration of function 'freeifaddrs' is invalid in C99 [-Wimplicit-function-declaration]
+              freeifaddrs (addrs);
+              ^
+build/temp.linux-x86_64-3.11/conftest-0.c:7:19: warning: variable 'ret' set but not used [-Wunused-but-set-variable]
+              int ret;
+                  ^
+3 warnings generated.
