@@ -3,13 +3,19 @@ from kivy.lang import Builder
 from kivy.core.text import LabelBase
 from kivy.core.window import Window
 from kivymd.app import MDApp
-from kivymd.uix.button.button import MDIconButton
+from kivymd.uix.button import MDButton, MDButtonText
+from kivymd.uix.dialog import MDDialog, MDDialogHeadlineText, MDDialogContentContainer
+from kivymd.uix.floatlayout import MDFloatLayout
+from kivymd.uix.textfield import MDTextField, MDTextFieldHintText
 from kivymd.uix.menu import MDDropdownMenu
 from kivymd.uix.boxlayout import MDBoxLayout
 from server_class import Server
 from client_class import Client
-from myutils import get_wifi_addr, snackbar
+from myutils import snackbar
 
+
+class Content(MDFloatLayout):
+    pass
 
 # ================== TOP BAR MENU =======================================
 class MenuHeader(MDBoxLayout):
@@ -38,6 +44,7 @@ class MainApp(MDApp):
         self.single_player: bool = True
         self.server: Server | None = None
         self.client: Client | None = None
+        self.stop_flow = True
 
         # Add nasalization font
         self.add_nasa_font()
@@ -54,8 +61,9 @@ class MainApp(MDApp):
         # Create menu displayed at finish
         self.menu_finish = self.menu_win()
 
-        # Get WIFI IP address if connected
-        self.ip_addr = get_wifi_addr()
+        # Server IP dialog
+        self.dialog = None
+
 
 
     """
@@ -64,13 +72,16 @@ class MainApp(MDApp):
 
     # ================== START SERVER ===================================
     def start_server(self):
-        self.single_player = False
         if not self.server and not self.client:
             self.server = Server()
-            self.server.menu_win = self.menu_win()
-            self.server.menu_lose = self.menu_lose()
-            self.root.ids.nickname_label.text = \
-                f"Nickname: [color=#ff0000][b]{self.server.nickname}[/b][/color]"
+            if self.server.is_running:
+                self.server.menu_win = self.menu_win()
+                self.server.menu_lose = self.menu_lose()
+                self.root.ids.nickname_label.text = \
+                    f"Nickname: [color=#ff0000][b]{self.server.nickname}[/b][/color]"
+                self.single_player = False
+            else:
+                self.server = None
         elif self.server:
             snackbar("Already running as server!")
         else:
@@ -78,21 +89,69 @@ class MainApp(MDApp):
 
     # ================== START CLIENT ===================================
     def start_client(self):
-        self.single_player = False
         if not self.server and not self.client:
             self.client = Client()
-            self.client.menu_win = self.menu_win()
-            self.client.menu_lose = self.menu_lose()
-            self.root.ids.nickname_label.text = \
-                f"Nickname: [color=#00ff00][b]{self.client.nickname}[/b][/color]"
-            if not self.client.is_connected:
-                self.client = None
-                self.single_player = True
+            self.dialog = self.server_ip_dialog()
+            self.dialog.open()
         elif self.server:
             snackbar("Already running as server!")
         else:
             snackbar("Already running as client!")
 
+    # ================== CONNECT CLIENT TO SERVER =======================
+    def client_connect(self):
+        print(f"Server IP provided: {self.client.server_addr}")
+        self.client.start_client()
+        if self.client.is_connected:
+            self.client.menu_win = self.menu_win()
+            self.client.menu_lose = self.menu_lose()
+            self.root.ids.nickname_label.text = \
+                f"Nickname: [color=#00ff00][b]{self.client.nickname}[/b][/color]"
+            self.single_player = False
+        else:
+            self.client = None
+            snackbar("Connection refused!")
+
+    # ================== Server IP Dialog Box ===========================
+    def server_ip_dialog(self):
+        dialog = MDDialog(
+            MDDialogHeadlineText(text="Enter Server IP"),
+            MDDialogContentContainer(
+                MDFloatLayout(
+                    MDTextField(
+                        MDTextFieldHintText(text="Server IP"),
+                        id="text_field",
+                        mode="outlined",
+                        pos_hint={"center_x": .5, "top": 1},
+                        size_hint_x=.8,
+                    ),
+                    MDButton(
+                        MDButtonText(text="Connect"),
+                        pos_hint={"center_x": .29, "center_y": .1},
+                        on_release=lambda obj: self.dialog_connect()
+                    ),
+                    MDButton(
+                        MDButtonText(text="Close"),
+                        pos_hint={"center_x": .71, "center_y": .1},
+                        on_release=lambda obj: self.dialog_close()
+                    ),
+                    adaptive_height=True,
+                ),
+            ),
+            size_hint=(.1, .1),
+        )
+        return dialog
+
+    # ================== CONNECT BUTTON =================================
+    def dialog_connect(self):
+        self.client.server_addr = self.dialog.get_ids().text_field.text
+        self.dialog.dismiss()
+        self.client_connect()
+
+    # ================== CLOSE BUTTON ===================================
+    def dialog_close(self):
+        self.dialog.dismiss()
+        self.client = None
 
     """
     ==================== GAME FUNCTIONS =================================
@@ -198,9 +257,9 @@ class MainApp(MDApp):
     ==================== PRESSING APP BUTTONS ===========================
     """
     # ================== ON PRESS THE GAME BUTTON =======================
-    def on_press(self, btn: MDIconButton, id: int):
+    def on_press(self, btn_id: int):
         self.change_button_color(self.last_id, .2)  # Uncolor button
-        if id == self.last_id:
+        if btn_id == self.last_id:
             if self.single_player:
                 self.count += 1
                 self.root.ids.count_label_1.text = str(self.count)
@@ -294,8 +353,8 @@ class MainApp(MDApp):
     # ================== ON START: STARTING THE APP =====================
     def on_start(self):
         self.random_id()  # Color random button
-        print(self.ip_addr)
-        self.root.ids.ip_label.text = f"Your IP: {self.ip_addr}"
+        # print(self.ip_addr)
+        # self.root.ids.ip_label.text = f"Your IP: {self.ip_addr}"
 
     # ================== BUILD THE LAYOUT ===============================
     def build(self):

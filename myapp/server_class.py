@@ -24,27 +24,35 @@ class Server:
 
         # Get WIFI IP address if connected
         self.ip_addr = get_wifi_addr()
+        print(self.ip_addr)
 
-        self.start_server()
+        if self.ip_addr.startswith("Not connected"):
+            MDApp.get_running_app().root.ids.ip_label.text = self.ip_addr
+        else:
+            self.start_server()
 
     # ================== START SERVER ===================================
     def start_server(self):
-        # Create socket, bind IP/port, set to listen mode and connection timeout
-        self.server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        self.server.bind((self.ip_addr, 55555))
-        self.server.listen()
-        self.server.settimeout(2)       # For any socket operation
-        self.is_running = True
-
-        # Start new thread to run receive_connection()
         try:
-            self.handle_connection_thread = Thread(target=self.handle_connection)
-            self.handle_connection_thread.start()
-        except Exception as e:
-            print(f"Error starting handle_connection thread on server: {e}")
+            # Create socket, bind IP/port, set to listen mode and connection timeout
+            self.server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            self.server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+            self.server.bind((self.ip_addr, 55555))
+            self.server.listen()
+            self.server.settimeout(2)       # For any socket operation#
+            self.is_running = True
+            MDApp.get_running_app().root.ids.ip_label.text = f"Your IP: {self.ip_addr}"
 
-        snackbar("Server is listening")
+            # Start new thread to run receive_connection()
+            try:
+                self.handle_connection_thread = Thread(target=self.handle_connection)
+                self.handle_connection_thread.start()
+            except Exception as e:
+                print(f"Error starting handle_connection thread on server: {e}")
+
+            snackbar("Server is listening")
+        except Exception as e:
+            print(f"Error starting server: {e}")
 
     # ================== THREAD-1: RECEIVE CONNECTION FROM NEW CLIENT ====
     def handle_connection(self):

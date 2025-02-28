@@ -2,13 +2,13 @@ import socket
 from threading import Thread
 from kivy.clock import mainthread
 from kivymd.app import MDApp
-from myutils import snackbar
+from myutils import snackbar, get_wifi_addr
 
 
 class Client:
     def __init__(self):
         self.client: socket.socket | None = None
-        self.server_addr = '192.168.0.7'
+        self.server_addr: str | None = None
         self.nickname: str | None = None
         self.players_count: list[int] = []
         self.receive_data_thread: Thread | None = None
@@ -16,15 +16,27 @@ class Client:
         self.menu_win = None
         self.menu_lose = None
         self.count = 0
-        self.start_client()
+
+        # Get WIFI IP address if connected
+        self.ip_addr = get_wifi_addr()
+        print(f"Client IP: {self.ip_addr}")
+
+        if self.ip_addr.startswith("Not connected"):
+            MDApp.get_running_app().root.ids.ip_label.text = self.ip_addr
+        else:
+            MDApp.get_running_app().root.ids.ip_label.text = f"Your IP: {self.ip_addr}"
+
 
     # ================== START CLIENT ===================================
     def start_client(self):
         try:
             # Create socket for client and connect to server
             self.client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            self.client.connect((self.server_addr, 55555))         # TODO: get server IP and port
+            self.client.settimeout(2)
+            self.client.connect((self.server_addr, 55555))
+
             self.is_connected = True
+            MDApp.get_running_app().root.ids.ip_label.text = f"Your IP: {self.ip_addr}"
 
             # Start new thread to run receive_data()
             try:
@@ -32,8 +44,12 @@ class Client:
                 self.receive_data_thread.start()
             except Exception as e:
                 print(f"Error starting receive_data thread on client: {e}")
+
         except ConnectionRefusedError:
             snackbar("Connection refused!")
+        except Exception as e:
+            print(f"Error starting client: {e}")
+
 
     # ================== THREAD: RECEIVE DATA FROM SERVER ===============
     def receive_data(self):

@@ -2,6 +2,11 @@
 # ========================= CLASS DEFINITION =========================== #
 ##########################################################################
 
+<Content>
+    MDTextField:
+        id: ip_text_field
+        pos_hint: {'center_x': .5, 'center_y': .5}
+
 <MDIconButton>
     icon: "alien"
     style: "tonal"
@@ -92,7 +97,7 @@ MDScreenManager:
             # ============= IP LABEL =============
             MDLabel:
                 id: ip_label
-                text: "IP address"
+                text: ""
                 font_style: "Title"
                 adaptive_width: True
                 pos_hint: {"center_x": .5, "center_y": .75}
