@@ -3,7 +3,7 @@ from kivy.lang import Builder
 from kivy.core.text import LabelBase
 from kivy.core.window import Window
 from kivymd.app import MDApp
-from kivymd.uix.button import MDButton, MDButtonText
+from kivymd.uix.button import MDButton, MDButtonText, MDIconButton
 from kivymd.uix.dialog import MDDialog, MDDialogHeadlineText, MDDialogContentContainer
 from kivymd.uix.floatlayout import MDFloatLayout
 from kivymd.uix.textfield import MDTextField, MDTextFieldHintText
@@ -69,7 +69,6 @@ class MainApp(MDApp):
     """
     ==================== START SERVER/CLIENT ============================
     """
-
     # ================== START SERVER ===================================
     def start_server(self):
         if not self.server and not self.client:
@@ -257,7 +256,7 @@ class MainApp(MDApp):
     ==================== PRESSING APP BUTTONS ===========================
     """
     # ================== ON PRESS THE GAME BUTTON =======================
-    def on_press(self, btn_id: int):
+    def on_press(self, btn: MDIconButton, btn_id: int):
         self.change_button_color(self.last_id, .2)  # Uncolor button
         if btn_id == self.last_id:
             if self.single_player:
@@ -312,6 +311,13 @@ class MainApp(MDApp):
     # ================== ON BACK TO HOME: RETURN TO HOME SCREEN ========================
     def on_back_to_home(self):
         self.on_reset()
+        if self.server:
+            self.server.close_connection()
+            self.server = None
+        if self.client:
+            self.client.close_connection()
+            self.client = None
+        self.menu.dismiss()
         self.root.current = "screen A"
 
     # ================== ON RESET: RESET COUNTER ========================
@@ -332,7 +338,8 @@ class MainApp(MDApp):
             self.reset_uix_values()
             self.client.menu_win.dismiss()
             self.client.menu_lose.dismiss()
-            self.client.client.send('RESET'.encode('ascii'))
+            if self.client.is_connected:
+                self.client.client.send('RESET'.encode('ascii'))
 
     # ================== ON EXIT: CLOSE SERVER/CLIENT/APP ===============
     def on_exit(self):
@@ -342,6 +349,7 @@ class MainApp(MDApp):
         elif self.client:
             self.client.close_connection()
             print("Client closed!")
+
         # Close app
         self.stop()
         print("App closed!")
