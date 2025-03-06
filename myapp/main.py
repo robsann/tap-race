@@ -6,6 +6,7 @@ from kivymd.app import MDApp
 from kivymd.uix.button import MDButton, MDButtonText, MDIconButton
 from kivymd.uix.dialog import MDDialog, MDDialogHeadlineText, MDDialogContentContainer
 from kivymd.uix.floatlayout import MDFloatLayout
+from kivymd.uix.boxlayout import MDBoxLayout
 from kivymd.uix.textfield import MDTextField, MDTextFieldHintText
 from kivymd.uix.menu import MDDropdownMenu
 from kivymd.uix.boxlayout import MDBoxLayout
@@ -116,7 +117,7 @@ class MainApp(MDApp):
         dialog = MDDialog(
             MDDialogHeadlineText(text="Enter Server IP"),
             MDDialogContentContainer(
-                MDFloatLayout(
+                MDBoxLayout(
                     MDTextField(
                         MDTextFieldHintText(text="Server IP"),
                         id="text_field",
@@ -124,17 +125,24 @@ class MainApp(MDApp):
                         pos_hint={"center_x": .5, "top": 1},
                         size_hint_x=.8,
                     ),
-                    MDButton(
-                        MDButtonText(text="Connect"),
-                        pos_hint={"center_x": .29, "center_y": .1},
-                        on_release=lambda obj: self.dialog_connect()
+                    MDBoxLayout(
+                        MDButton(
+                            MDButtonText(text="Connect"),
+                            on_release=lambda obj: self.dialog_connect(),
+                        ),
+                        MDButton(
+                            MDButtonText(text="Close"),
+                            # pos_hint={"center_x": 1},
+                            on_release=lambda obj: self.dialog_close(),
+                        ),
+                        adaptive_height=True,
+                        adaptive_width=True,
+                        spacing = "8dp",
+                        pos_hint = {'center_x': .5},
                     ),
-                    MDButton(
-                        MDButtonText(text="Close"),
-                        pos_hint={"center_x": .71, "center_y": .1},
-                        on_release=lambda obj: self.dialog_close()
-                    ),
+                    orientation="vertical",
                     adaptive_height=True,
+                    spacing="12dp",
                 ),
             ),
             size_hint=(.1, .1),
@@ -369,6 +377,7 @@ class MainApp(MDApp):
         self.theme_cls.theme_style = "Dark"
         self.theme_cls.primary_palette = "Orange"
         Window.size = (300, 600)
+
         return self.screen
 
 
