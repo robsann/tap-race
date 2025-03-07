@@ -1,5 +1,9 @@
 import netifaces as ni
 from kivymd.uix.snackbar import MDSnackbar, MDSnackbarText
+from kivymd.uix.label import MDLabel
+from kivymd.uix.floatlayout import MDFloatLayout
+from kivymd.uix.boxlayout import MDBoxLayout
+from kivymd.uix.progressindicator import MDLinearProgressIndicator
 
 
 # ================== GET WIFI ADDRESS IF CONNECTED ======================
@@ -15,7 +19,7 @@ def get_wifi_addr() -> str:
 
 
 # ================== DISPLAY SNACK BAR AT THE BOTTOM ==================
-def snackbar(message):
+def snackbar(message: str) -> None:
     MDSnackbar(
         MDSnackbarText(
             text=f"[b]{message}[/b]",
@@ -27,5 +31,33 @@ def snackbar(message):
         background_color=[.6,.6,.6,1],
         duration=2,
     ).open()
+
+# ================== PROGRESS BAR WIDGET ===============================
+def add_prog_bar(num: int) -> (MDLinearProgressIndicator, MDBoxLayout):
+    colors = ["#ff1717", "#17ff51", "#173aff", "#f3ff17"]
+    label = MDLabel(
+        markup=True,
+        text=f"[color={colors[num]}][b]P{num + 1}[/color][/b]",
+        theme_font_size="Custom",
+        font_size="20sp",
+        adaptive_width=True,
+        pos_hint={'center_y': .5},
+    )
+    prog_bar = MDLinearProgressIndicator(
+        value=0,
+        size_hint_y=None,
+        height="10dp",
+        pos_hint={'center_x': .5, 'center_y': .5},
+    )
+    panel = MDBoxLayout(
+        label,
+        MDFloatLayout(
+            prog_bar,
+            size_hint=(1, 1)
+        ),
+        spacing="8dp"
+    )
+    return prog_bar, panel
+
 
 

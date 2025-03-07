@@ -80,6 +80,7 @@ MDScreenManager:
         name: "screen A"
         size_hint: 1, 1
         # md_bg_color: [1,1,1,1]
+        on_enter: app.on_home_screen()
 
         MDFloatLayout:
             adaptive_height: True
@@ -172,58 +173,15 @@ MDScreenManager:
                     MDActionTopAppBarButton:
                         id: menu_btn
                         icon: "dots-vertical"
-                        on_release: app.menu.open()
+                        on_release: app.top_menu.open()
 
             # ========== Progress bars ==========
             MDGridLayout:
+                id: prog_bar_grid
                 md_bg_color: "#4e7a4f"
-                cols: 2
-                padding: "12dp"
-                spacing: "12dp"
-
-                MDLabel:
-                    id: bar_label_1
-#                    md_bg_color: "#88000066"
-                    markup: True
-                    text: "[color=#ff0000][b]P1[/color][/b]"
-                    theme_font_size: "Custom"
-                    font_size: "20sp"
-#                    size_hint_x: None
-#                    width: "26dp"
-                    adaptive_width: True
-                    pos_hint: {'center_y': .5}
-
-                MDFloatLayout:
-                    size_hint: 1, 1
-
-                    MDLinearProgressIndicator:
-                        id: prog_bar_1
-                        value: 0
-                        size_hint_y: None
-                        height: "10dp"
-                        pos_hint: {'center_x': .5, 'center_y': .5}
-
-                MDLabel:
-                    id: bar_label_2
-#                    md_bg_color: "#00880066"
-                    markup: True
-                    text: "[color=#00ff00][b]P2[/color][/b]"
-                    theme_font_size: "Custom"
-                    font_size: "20sp"
-#                    size_hint_x: None
-#                    width: "26dp"
-                    adaptive_width: True
-                    pos_hint: {'center_y': .5}
-
-                MDFloatLayout:
-                    size_hint: 1, 1
-
-                    MDLinearProgressIndicator:
-                        id: prog_bar_2
-                        value: 0
-                        size_hint_y: None
-                        height: "10dp"
-                        pos_hint: {'center_x': .5, 'center_y': .5}
+                cols: 1
+                padding: "8dp"
+                spacing: "8dp"
 
 
             # ========== Counter ==========
@@ -235,18 +193,12 @@ MDScreenManager:
                 height: "100dp"
 
                 MDLabel:
-                    id: count_label_1
+                    id: count_label
                     text: "0"
                     font_style: "Display"
                     adaptive_size: True
                     pos_hint: {"center_x": .5, "center_y": .5}
 
-                MDLabel:
-                    id: count_label_2
-                    text: "0"
-                    font_style: "Display"
-                    adaptive_size: True
-                    pos_hint: {"center_x": .5, "center_y": .55}
 
             # ========== Buttons ==========
             MDFloatLayout:
@@ -262,7 +214,7 @@ MDScreenManager:
                     size: "64dp", "64dp"
                     pos_hint: {"center_x": .5, "center_y": .75}
                     ripple_effect: False
-                    on_release: app.on_press(self, 1)
+                    on_release: app.on_press(1)
 
                 MDIconButton:
                     id: btn2
@@ -270,7 +222,7 @@ MDScreenManager:
                     size: "64dp", "64dp"
                     pos_hint: {"center_x": .3, "center_y": .5}
                     ripple_effect: False
-                    on_release: app.on_press(self, 2)
+                    on_release: app.on_press(2)
 
                 MDIconButton:
                     id: btn3
@@ -278,7 +230,7 @@ MDScreenManager:
                     size: "64dp", "64dp"
                     pos_hint: {"center_x": .7, "center_y": .5}
                     ripple_effect: False
-                    on_release: app.on_press(self, 3)
+                    on_release: app.on_press(3)
 
                 MDIconButton:
                     id: btn4
@@ -286,4 +238,4 @@ MDScreenManager:
                     size: "64dp", "64dp"
                     pos_hint: {"center_x": .5, "center_y": .25}
                     ripple_effect: False
-                    on_release: app.on_press(self, 4)
+                    on_release: app.on_press(4)
