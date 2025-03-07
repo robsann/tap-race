@@ -47,6 +47,7 @@ class Client:
             self.client.connect((self.server_addr, 55555))
 
             self.is_connected = True
+            print("Client is connected: True - start_client")
             MDApp.get_running_app().root.ids.ip_label.text = f"Your IP: {self.ip_addr}"
 
             # Start new thread to run receive_data()
@@ -81,6 +82,9 @@ class Client:
                         self.n_players = int(msg[19])
                         self.players_score = [0 for _ in range(self.n_players)]
                         self.start_game_screen()
+                    case s if s.startswith('NPLAYERS'):
+                        self.n_players = int(msg[10])
+                        self.players_score = [0 for _ in range(self.n_players)]
                     case s if s.startswith('COUNT'):
                         # Receive server score
                         idx = int(msg[7]) - 1
@@ -102,6 +106,7 @@ class Client:
                         self.client.send('CLOSED_BY_SERVER_ACK'.encode('ascii'))
                         self.client.close()
                         self.is_connected = False
+                        print("Client is connected: False - CLOSED_BY_SERVER")
                         self.back_home()
                         break
                     case s if s.startswith('CLOSED_BY_CLIENT_ACK'):
@@ -109,12 +114,13 @@ class Client:
                         print('CLOSED_BY_CLIENT_ACK')
                         break
 
-            except TimeoutError as e:
+            except TimeoutError:
                 pass
             except Exception as e:
                 print(f"Exception caught in receive_data: {e}")
                 self.client.close()
                 self.is_connected = False
+                print("Client is connected: False - Exception in receive_data")
                 break
 
 
@@ -126,6 +132,7 @@ class Client:
 
         self.client.close()
         self.is_connected = False
+        print("Client is connected: False - close_connection")
 
 
     # ================== RUN ON MAIN THREAD ============================
@@ -165,9 +172,11 @@ class Client:
 
     @mainthread
     def back_home(self):
-        for i in range(self.n_players):
-            grid = MDApp.get_running_app().root.ids.prog_bar_grid
-            grid.remove_widget(self.prog_bars[i])
+        prog_bar_grid = MDApp.get_running_app().root.ids.prog_bar_grid
+        for child in prog_bar_grid.children:
+            print(child)
+            prog_bar_grid.remove_widget(child)
+
         self.prog_bars = []
         MDApp.get_running_app().root.ids.nickname_label.text = ""
         MDApp.get_running_app().root.current = "screen A"

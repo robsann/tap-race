@@ -95,7 +95,7 @@ class Server:
                 except Exception as e:
                     print(f"Error starting receive_data thread on server: {e}")
 
-            except TimeoutError as e:
+            except TimeoutError:
                 pass
             except Exception as e:
                 print(f"Exception caught in receive_connection: {e}")
@@ -111,8 +111,10 @@ class Server:
                 match msg:
                     case s if s.startswith('STARTED_BY_CLIENT'):
                         # Start game
-                        self.broadcast(f'STARTED_BY_SERVER: {self.n_players}')
+                        # self.broadcast(f'STARTED_BY_SERVER: {self.n_players}')
                         self.start_game_screen()
+                    case s if s.startswith('GET_NPLAYERS'):
+                        self.broadcast(f'NPLAYERS: {self.n_players}')
                     case s if s.startswith('COUNT'):
                         # Receive client score
                         idx = int(msg[7]) - 1
@@ -145,7 +147,7 @@ class Server:
                     case _:
                         self.broadcast(msg)
 
-            except TimeoutError as e:
+            except TimeoutError:
                 pass
             except Exception as e:
                 print(f"Exception caught in receive_data: {e}")
@@ -212,9 +214,13 @@ class Server:
 
     @mainthread
     def back_home(self):
-        for i in range(self.n_players):
-            grid = MDApp.get_running_app().root.ids.prog_bar_grid
-            grid.remove_widget(self.prog_bars[i])
+        prog_bar_grid = MDApp.get_running_app().root.ids.prog_bar_grid
+        for child in prog_bar_grid.children:
+            print(child)
+            prog_bar_grid.remove_widget(child)
+
         self.prog_bars = []
         MDApp.get_running_app().root.ids.nickname_label.text = ""
         MDApp.get_running_app().root.current = "screen A"
+
+

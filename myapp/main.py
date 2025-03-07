@@ -1,4 +1,5 @@
 import random
+import time
 from kivy.lang import Builder
 from kivy.core.text import LabelBase
 from kivy.core.window import Window
@@ -18,11 +19,10 @@ from myutils import snackbar, add_prog_bar
 
 
 """======================================================================
-                        CUSTOM LAYOUT CLASSES
+                    CUSTOM LAYOUT CLASSES USED IN MAIN
 ======================================================================"""
-class Content(MDFloatLayout):
-    pass
-
+# class IPText(MDFloatLayout):
+#     pass
 
 class MenuHeader(MDBoxLayout):
     """An instance of the class that will be added to the menu header."""
@@ -34,11 +34,6 @@ class MenuWin(MDBoxLayout):
 
 class MenuLose(MDBoxLayout):
     """An instance of the class that will be added to the menu header."""
-
-
-class ProgBar(MDBoxLayout):
-    """An instance of the class that create the player progress bar"""
-    # text = StringProperty()
 
 
 """======================================================================
@@ -110,27 +105,13 @@ class MainApp(MDApp):
         else:
             snackbar("Already running as client!")
 
-    # ================== CONNECT CLIENT TO SERVER =======================
-    def client_connect(self):
-        print(f"Server IP provided: {self.client.server_addr}")
-        self.client.start_client()
-        if self.client.is_connected:
-            self.client.menu_win = self.menu_win()
-            self.client.menu_lose = self.menu_lose()
-            self.root.ids.nickname_label.text = \
-                f"Nickname: [color=#00ff00][b]{self.client.nickname}[/b][/color]"
-            self.single_player = False
-        else:
-            self.client = None
-            snackbar("Connection refused!")
-
     # ================== Server IP Dialog Box ===========================
     def dialog_box(self):
         dialog = MDDialog(
             MDDialogHeadlineText(text="Enter Server IP"),
             MDDialogContentContainer(
                 MDBoxLayout(
-                    MDTextField(
+                    MDTextField(                                    # TODO: text_field
                         MDTextFieldHintText(text="Server IP"),
                         id="text_field",
                         mode="outlined",
@@ -144,7 +125,6 @@ class MainApp(MDApp):
                         ),
                         MDButton(
                             MDButtonText(text="Close"),
-                            # pos_hint={"center_x": 1},
                             on_release=lambda obj: self.dialog_close(),
                         ),
                         adaptive_height=True,
@@ -171,6 +151,20 @@ class MainApp(MDApp):
     def dialog_close(self):
         self.server_ip_dialog.dismiss()
         self.client = None
+
+    # ================== CONNECT CLIENT TO SERVER =======================
+    def client_connect(self):
+        print(f"Server IP provided: {self.client.server_addr}")
+        self.client.start_client()
+        if self.client.is_connected:
+            self.client.menu_win = self.menu_win()
+            self.client.menu_lose = self.menu_lose()
+            self.root.ids.nickname_label.text = \
+                f"Nickname: [color=#00ff00][b]{self.client.nickname}[/b][/color]"
+            self.single_player = False
+        else:
+            self.client = None
+            snackbar("Connection refused!")
 
     """
     ==================== GAME FUNCTIONS =================================
@@ -277,31 +271,6 @@ class MainApp(MDApp):
             for i in range(len(self.prog_bars)):
                 self.prog_bars[i].value = 0
 
-
-
-
-    """
-    ==================== PRESSING APP BUTTONS ===========================
-    """
-    def on_home_screen(self):
-        if self.server:
-            self.server = None
-        elif self.client:
-            self.client = None
-
-
-    # ================== ON START BUTTON ================================
-    def on_start_btn(self):
-        if self.server and self.server.clients:
-            self.server.broadcast(f'STARTED_BY_SERVER: {self.server.n_players}')
-        elif self.client:
-            self.client.client.send('STARTED_BY_CLIENT'.encode('ascii'))
-        else:
-            self.single_player = True
-
-        self.build_bars_panel()
-        self.root.current = "screen B"
-
     # ================== BUILD PROGRESS BAR PANEL =======================
     def build_bars_panel(self):
         if self.server:
@@ -318,9 +287,32 @@ class MainApp(MDApp):
                 self.root.ids.prog_bar_grid.add_widget(panel)
                 print(f"Adding P{i + 1} progress bar")
         else:
-            prog_bar, panel = add_prog_bar(num=1)
+            prog_bar, panel = add_prog_bar(num=0)
             self.prog_bars.append(prog_bar)
             self.root.ids.prog_bar_grid.add_widget(panel)
+            print(f"Adding Single Player progress bar")
+
+    """
+    ==================== PRESSING APP BUTTONS ===========================
+    """
+    def on_home_screen(self):
+        if self.server:
+            self.server = None
+        elif self.client:
+            self.client = None
+
+    # ================== ON START BUTTON ================================
+    def on_start_btn(self):
+        if self.server and self.server.clients:
+            self.server.broadcast(f'STARTED_BY_SERVER: {self.server.n_players}')
+        elif self.client:
+            self.client.client.send('STARTED_BY_CLIENT'.encode('ascii'))
+            # self.client.client.send('GET_NPLAYERS'.encode('ascii'))
+        else:
+            self.single_player = True
+
+        self.build_bars_panel()
+        self.root.current = "screen B"
 
     # ================== ON PRESS THE GAME BUTTON =======================
     def on_press(self, btn_id: int):
@@ -413,23 +405,25 @@ class MainApp(MDApp):
             self.client.menu_lose.dismiss()
             print(f"Client is connected: {self.client.is_connected}")
             if self.client.is_connected:
-                # Reset server score label and prog bars values
                 self.client.client.send('RESET'.encode('ascii'))
 
     # ================== REMOVE PROGRESS BARS ===========================
     def remove_prog_bars(self):
+        # Remove progress bars from MDGridLayout
+        prog_bar_grid = self.root.ids.prog_bar_grid
+        for child in prog_bar_grid.children:
+            print(child)
+            prog_bar_grid.remove_widget(child)
+
         if self.server:
-            for i in range(self.server.n_players):
-                self.root.ids.prog_bar_grid.remove_widget(self.server.prog_bars[i])
             self.server.broadcast('RESTART')
             self.server.prog_bars = []
         elif self.client:
-            for i in range(self.client.n_players):
-                self.root.ids.prog_bar_grid.remove_widget(self.client.prog_bars[i])
             self.client.client.send('RESTART'.encode('ascii'))
             self.client.prog_bars = []
         else:
-            self.root.ids.prog_bar_grid.remove_widget(self.prog_bars[0])
+            self.prog_bars = []
+
 
     # ================== ON EXIT: CLOSE SERVER/CLIENT/APP ===============
     def on_exit(self):
