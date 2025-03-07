@@ -70,8 +70,6 @@ class MainApp(MDApp):
         self.menu_finish = self.menu_win()
 
 
-
-
     """
     ==================== START SERVER ===================================
     """
