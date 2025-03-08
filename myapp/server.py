@@ -114,39 +114,41 @@ class Server:
                     match msg:
                         # Start game
                         case s if s.startswith('STARTED_BY_CLIENT'):
-                            # TODO: Multiplayer
-                            # self.broadcast(f'NPLAYERS: {self.n_players}&')
+                            self.broadcast(f'STARTED_BY_CLIENT&')
                             self.start_game_screen()
                         # Receive client score
                         case s if s.startswith('COUNT'):
+                            self.broadcast(f"{msg}&")
                             idx = int(msg[7]) - 1
                             count = int(msg[10:])
                             self.players_score[idx] = count
                             self.update_counter(count, idx)
                         # Open lose menu
                         case s if s.startswith('LOSE'):
+                            self.broadcast(f"{msg}&")
                             self.update_menu_lose()
                         # Reset score and progress bars
                         case s if s.startswith('RESET'):
+                            self.broadcast(f"{msg}&")
                             self.update_reset()
                         # Remove everything and stop thread
-                        case s if s.startswith('RESTART'):
-                            self.back_home()
+                        case s if s.startswith('RESTARTED_BY_CLIENT'):
+                            self.broadcast(f"{msg}&")
+                            self.update_back_home()
                         # Close connection, remove everything, and stop thread
                         case s if s.startswith('CLOSED_BY_CLIENT'):
-                            idx = self.clients.index(client)
-                            nickname = self.nicknames[idx]
+                            nickname = self.nicknames[self.clients.index(client)]
                             self.clients.remove(client)
                             self.nicknames.remove(nickname)
                             client.send('CLOSED_BY_CLIENT_ACK&'.encode('ascii'))
-                            self.close_connection()
+                            self.close_connection(close_clients=False)
                             self.update_snackbar(f"{nickname} disconnected!")
                             print(f"{nickname} disconnected!")
-                            break
+                            self.stop_thread = True
                         # Acknowledge from client
                         case s if s.startswith('CLOSED_BY_SERVER_ACK'):
                             client.close()
-                            break
+                            self.stop_thread = True
                         # Any other message is broadcast to clients
                         case _:
                             self.broadcast(msg)
@@ -160,25 +162,25 @@ class Server:
 
     # ================== SEND MESSAGE TO ALL CLIENTS ====================
     def broadcast(self, message):
+        print(f"Broadcasting: {message}")
         for client in self.clients:
             client.send(message.encode('ascii'))
 
 
     # ================== CLOSE SERVER SOCKET =============================
-    def close_connection(self):
-        clients = self.clients.copy()
-        for client in clients:
-            index = self.clients.index(client)
-            nickname = self.nicknames[index]
-            self.clients.remove(client)
-            self.nicknames.remove(nickname)
-
-            print(f"Disconnecting client {nickname}")
-            client.send('CLOSED_BY_SERVER&'.encode('ascii'))
+    def close_connection(self, close_clients=True):
+        if close_clients:
+            clients = self.clients.copy()
+            for client in clients:
+                index = self.clients.index(client)
+                nickname = self.nicknames[index]
+                self.clients.remove(client)
+                self.nicknames.remove(nickname)
+                print(f"Disconnecting client {nickname}")
+                client.send('CLOSED_BY_SERVER&'.encode('ascii'))
 
         self.stop_thread = True
         self.handle_connection_thread.join()
-
         self.server.close()
 
 
@@ -219,15 +221,14 @@ class Server:
         self.menu_lose.dismiss()
 
     @mainthread
-    def back_home(self):
+    def update_back_home(self):
+        # Remove progress bars from MDGridLayout
         prog_bar_grid = MDApp.get_running_app().root.ids.prog_bar_grid
         children = prog_bar_grid.children.copy()
-        print(children)
         for child in children:
-            print(child)
             prog_bar_grid.remove_widget(child)
-
         self.prog_bars = []
+
         MDApp.get_running_app().root.ids.nickname_label.text = ""
         MDApp.get_running_app().root.current = "screen A"
 

@@ -26,6 +26,7 @@ class Client:
 
         self.players_score: list[int] = []
         self.prog_bars: list[MDLinearProgressIndicator] = []
+        self.colors = ["#ff1717", "#17ff17", "#1717ff", "#ffff17", '#17ffff', '#8817ff']
 
         # Get WIFI IP address if connected
         self.ip_addr = get_wifi_addr()
@@ -82,8 +83,9 @@ class Client:
                             print(f"Client connected as {self.nickname}")
                             self.update_snackbar()
                         # Start game
-                        case s if s.startswith('STARTED_BY_SERVER'):
-                            self.n_players = int(msg[19])
+                        case s if (s.startswith('STARTED_BY_SERVER')
+                                   or s.startswith('STARTED_BY_CLIENT')):
+                            # self.n_players = int(msg[19])
                             self.players_score = [0 for _ in range(self.n_players)]
                             self.start_game_screen()
                         # Get number of players
@@ -98,25 +100,33 @@ class Client:
                             self.update_counter(count, idx)
                         # Open lose menu
                         case s if s.startswith('LOSE'):
-                            self.update_menu_lose()
+                            if self.count < 10:
+                                self.update_menu_lose()
                         # Reset score and progress bars
                         case s if s.startswith('RESET'):
                             self.update_reset()
+                        # ============= Trigger Stop Thread =============
                         # Remove everything and stop thread
-                        case s if s.startswith('RESTART'):
-                            self.back_home()
+                        case s if s.startswith('RESTARTED_BY_SERVER'):
+                            self.update_reset()
+                            self.close_connection(from_server=True)
+                            self.update_back_home()
+                            self.stop_thread = True
+                        # Remove everything and stop thread
+                        case s if s.startswith('RESTARTED_BY_CLIENT'):
+                            self.update_reset()
+                            self.close_connection(from_server=False)
+                            self.update_back_home()
                             self.stop_thread = True
                         # Close connection, remove everything, and stop thread
                         case s if s.startswith('CLOSED_BY_SERVER'):
                             self.client.send('CLOSED_BY_SERVER_ACK&'.encode('ascii'))
                             self.client.close()
                             self.is_connected = False
-                            print("Client is connected: False - CLOSED_BY_SERVER")
-                            self.back_home()
+                            self.update_back_home()
                             self.stop_thread = True
-                        # Stop thread
+                        # Ack message used to Stop thread
                         case s if s.startswith('CLOSED_BY_CLIENT_ACK'):
-                            print('CLOSED_BY_CLIENT_ACK')
                             self.stop_thread = True
 
             except TimeoutError:
@@ -125,19 +135,17 @@ class Client:
                 print(f"Exception caught in receive_data: {e}")
                 self.client.close()
                 self.is_connected = False
-                print("Client is connected: False - Exception in receive_data")
                 break
 
 
     # ================== CLOSE CLIENT SOCKET ============================
-    def close_connection(self):
-        if self.is_connected:
+    def close_connection(self, from_server=False):
+        if self.is_connected and not from_server:
             self.client.send('CLOSED_BY_CLIENT&'.encode('ascii'))
             self.receive_data_thread.join()
 
         self.client.close()
         self.is_connected = False
-        print("Client is connected: False - close_connection")
 
 
     # ================== RUN ON MAIN THREAD ============================
@@ -167,24 +175,25 @@ class Client:
 
     @mainthread
     def update_reset(self):
+        # Reset counter, counter label, and prog_bars values
         self.count = 0
         MDApp.get_running_app().root.ids.count_label.text = "0"
-        for i in range(self.n_players):
-            self.prog_bars[i].value = 0
-
+        if self.prog_bars:
+            for i in range(self.n_players):
+                self.prog_bars[i].value = 0
+        # Dismiss win and lose menu
         self.menu_win.dismiss()
         self.menu_lose.dismiss()
 
     @mainthread
-    def back_home(self):
+    def update_back_home(self):
+        # Remove progress bars from MDGridLayout
         prog_bar_grid = MDApp.get_running_app().root.ids.prog_bar_grid
         children = prog_bar_grid.children.copy()
-        print(children)
         for child in children:
-            print(child)
             prog_bar_grid.remove_widget(child)
-
         self.prog_bars = []
+
         MDApp.get_running_app().root.ids.nickname_label.text = ""
         MDApp.get_running_app().root.current = "screen A"
 

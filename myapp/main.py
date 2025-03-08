@@ -147,8 +147,9 @@ class MainApp(MDApp):
         if self.client.is_connected:
             self.client.menu_win = self.menu_win()
             self.client.menu_lose = self.menu_lose()
+            color = self.client.colors[self.client.idx]
             self.root.ids.nickname_label.text = \
-                f"Nickname: [color=#00ff00][b]{self.client.nickname}[/b][/color]"
+                f"Nickname: [color={color}][b]{self.client.nickname}[/b][/color]"
             self.single_player = False
         else:
             self.client = None
@@ -202,7 +203,7 @@ class MainApp(MDApp):
         menu_items = [
             {
                 "text": "Back to Home",
-                "on_release": lambda: self.on_back_to_home(),
+                "on_release": lambda: self.on_back_home(),
             },
             {
                 "text": "Reset",
@@ -258,27 +259,22 @@ class MainApp(MDApp):
             for i in range(len(self.prog_bars)):
                 self.prog_bars[i].value = 0
 
-    # ================== BUILD PROGRESS BAR PANEL =======================
-    def build_bars_panel(self):
+    # ================== REMOVE PROGRESS BARS ===========================
+    def remove_prog_bars(self):
         if self.server:
-            self.server.n_players = len(self.server.players_score)
-            for i in range(self.server.n_players):
-                prog_bar, panel = add_prog_bar(num=i)
-                self.server.prog_bars.append(prog_bar)
-                self.root.ids.prog_bar_grid.add_widget(panel)
-                print(f"Adding P{i + 1} progress bar")
-        elif self.client:
-            print(f"Client n_players: {self.client.n_players}")
-            for i in range(self.client.n_players):
-                prog_bar, panel = add_prog_bar(num=i)
-                self.client.prog_bars.append(prog_bar)
-                self.root.ids.prog_bar_grid.add_widget(panel)
-                print(f"Adding P{i + 1} progress bar")
+            # Remove progress bars from MDGridLayout
+            prog_bar_grid = self.root.ids.prog_bar_grid
+            children = prog_bar_grid.children.copy()
+            for child in children:
+                prog_bar_grid.remove_widget(child)
+            self.server.prog_bars = []
         else:
-            prog_bar, panel = add_prog_bar(num=0)
-            self.prog_bars.append(prog_bar)
-            self.root.ids.prog_bar_grid.add_widget(panel)
-            print(f"Adding Single Player progress bar")
+            # Remove progress bars from MDGridLayout
+            prog_bar_grid = self.root.ids.prog_bar_grid
+            children = prog_bar_grid.children.copy()
+            for child in children:
+                prog_bar_grid.remove_widget(child)
+            self.prog_bars = []
 
     """
     ==================== PRESSING APP BUTTONS ===========================
@@ -294,13 +290,15 @@ class MainApp(MDApp):
     def on_start_btn(self):
         if self.server and self.server.clients:
             self.server.broadcast(f'STARTED_BY_SERVER: {self.server.n_players}&')
-            self.build_bars_panel()
-            self.root.current = "screen B"
+            self.server.start_game_screen()
         elif self.client:
             self.client.client.send('STARTED_BY_CLIENT&'.encode('ascii'))
         else:
             self.single_player = True
-            self.build_bars_panel()
+            # Add progress bar and change to screen B
+            prog_bar, panel = add_prog_bar(num=0)
+            self.prog_bars.append(prog_bar)
+            self.root.ids.prog_bar_grid.add_widget(panel)
             self.root.current = "screen B"
 
         # self.build_bars_panel()
@@ -337,9 +335,8 @@ class MainApp(MDApp):
                     self.server.broadcast('LOSE&')
             # Client mode
             elif self.client:
+                # Update counter
                 self.client.count += 1
-                self.client.update_counter(self.client.count, self.client.idx)
-                self.client.players_score[self.client.idx] = self.client.count
                 # Send count to server
                 message = f"COUNT-{self.client.nickname}: {self.client.count}&"
                 self.client.client.send(message.encode('ascii'))
@@ -353,26 +350,6 @@ class MainApp(MDApp):
         # Generate next button with high intensity color
         self.random_id()
 
-    # ================== ON BACK TO HOME: RETURN TO HOME SCREEN ========================
-    def on_back_to_home(self):
-        self.on_reset()
-        self.remove_prog_bars()
-
-        # Terminate server
-        if self.server:
-            self.server.close_connection()
-            self.server = None
-
-        # Terminate client
-        if self.client:
-            self.client.close_connection()
-            self.client = None
-
-        # Return to screen A
-        self.top_menu.dismiss()
-        self.root.ids.nickname_label.text = ""
-        self.root.current = "screen A"
-
     # ================== ON RESET: RESET COUNTER ========================
     def on_reset(self):
         if self.single_player:
@@ -383,42 +360,46 @@ class MainApp(MDApp):
         elif self.server:
             self.server.count = 0
             self.reset_uix_values()
+            self.top_menu.dismiss()
             self.server.menu_win.dismiss()
             self.server.menu_lose.dismiss()
             self.server.broadcast('RESET&')
         elif self.client:
-            self.client.count = 0
-            self.reset_uix_values()
-            self.client.menu_win.dismiss()
-            self.client.menu_lose.dismiss()
-            print(f"Client is connected: {self.client.is_connected}")
+            self.top_menu.dismiss()
             if self.client.is_connected:
                 self.client.client.send('RESET&'.encode('ascii'))
 
-    # ================== REMOVE PROGRESS BARS ===========================
-    def remove_prog_bars(self):
-        # Remove progress bars from MDGridLayout
-        prog_bar_grid = self.root.ids.prog_bar_grid
-        children = prog_bar_grid.children.copy()
-        for child in children:
-            prog_bar_grid.remove_widget(child)
-
-        if self.server:
-            self.server.broadcast('RESTART&')
-            self.server.prog_bars = []
+    # ================== ON BACK TO HOME: RETURN TO HOME SCREEN ========================
+    def on_back_home(self):
+        # Terminate single player
+        if self.single_player:
+            self.on_reset()
+            self.remove_prog_bars()
+            self.top_menu.dismiss()
+            self.root.ids.nickname_label.text = ""
+            self.root.current = "screen A"
+        # Terminate server
+        elif self.server:
+            self.server.broadcast('RESTARTED_BY_SERVER&')
+            self.server.update_reset()
+            self.server.update_back_home()
+            self.server.close_connection(close_clients=False)
+            self.server = None
+            self.top_menu.dismiss()
+        # Terminate client
         elif self.client:
-            self.client.client.send('RESTART&'.encode('ascii'))
-            self.client.prog_bars = []
-        else:
-            self.prog_bars = []
+            self.top_menu.dismiss()
+            if self.client.is_connected:
+                self.client.client.send('RESTARTED_BY_CLIENT&'.encode('ascii'))
+            self.client = None
 
     # ================== ON EXIT: CLOSE SERVER/CLIENT/APP ===============
     def on_exit(self):
         if self.server:
-            self.server.close_connection()
+            self.server.close_connection(close_clients=True)
             print("Server closed!")
         elif self.client:
-            self.client.close_connection()
+            self.client.close_connection(from_server=False)
             print("Client closed!")
 
         # Close app
