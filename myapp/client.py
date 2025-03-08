@@ -11,6 +11,7 @@ class Client:
     def __init__(self):
         self.client: socket.socket | None = None
         self.receive_data_thread: Thread | None = None
+        self.stop_thread: bool = False
 
         self.idx: int | None = None
         self.nickname: str | None = None
@@ -41,7 +42,6 @@ class Client:
         try:
             # Create socket for client and connect to server
             self.client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            self.client.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
             self.client.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
             self.client.settimeout(2)
             self.client.connect((self.server_addr, 55555))
@@ -66,53 +66,58 @@ class Client:
     # ================== THREAD: RECEIVE DATA FROM SERVER ===============
     def receive_data(self):
         while True:
+            if self.stop_thread:
+                break
             try:
                 # Get data from server
-                msg = self.client.recv(1024).decode('ascii')
-                print(f"msg from server: {msg}")
-                match msg:
-                    case s if s.startswith('P'):
+                msg_recv = self.client.recv(1024).decode('ascii')
+                msg_recv = msg_recv.split('&')[:-1]
+                for msg in msg_recv:
+                    print(f"msg from server: {msg}")
+                    match msg:
                         # Get nickname
-                        self.nickname = msg
-                        self.idx = int(msg[1]) - 1
-                        print(f"Client connected as {self.nickname}")
-                        self.update_snackbar()
-                    case s if s.startswith('STARTED_BY_SERVER'):
+                        case s if s.startswith('P'):
+                            self.nickname = msg
+                            self.idx = int(msg[1]) - 1
+                            print(f"Client connected as {self.nickname}")
+                            self.update_snackbar()
                         # Start game
-                        self.n_players = int(msg[19])
-                        self.players_score = [0 for _ in range(self.n_players)]
-                        self.start_game_screen()
-                    case s if s.startswith('NPLAYERS'):
-                        self.n_players = int(msg[10])
-                        self.players_score = [0 for _ in range(self.n_players)]
-                    case s if s.startswith('COUNT'):
+                        case s if s.startswith('STARTED_BY_SERVER'):
+                            self.n_players = int(msg[19])
+                            self.players_score = [0 for _ in range(self.n_players)]
+                            self.start_game_screen()
+                        # Get number of players
+                        case s if s.startswith('NPLAYERS'):
+                            self.n_players = int(msg[10])
+                            self.players_score = [0 for _ in range(self.n_players)]
                         # Receive server score
-                        idx = int(msg[7]) - 1
-                        count = int(msg[10:])
-                        self.players_score[idx] = count
-                        self.update_counter(count, idx)
-                    case s if s.startswith('LOSE'):
+                        case s if s.startswith('COUNT'):
+                            idx = int(msg[7]) - 1
+                            count = int(msg[10:])
+                            self.players_score[idx] = count
+                            self.update_counter(count, idx)
                         # Open lose menu
-                        self.update_menu_lose()
-                    case s if s.startswith('RESET'):
+                        case s if s.startswith('LOSE'):
+                            self.update_menu_lose()
                         # Reset score and progress bars
-                        self.update_reset()
-                    case s if s.startswith('RESTART'):
+                        case s if s.startswith('RESET'):
+                            self.update_reset()
                         # Remove everything and stop thread
-                        self.back_home()
-                        break
-                    case s if s.startswith('CLOSED_BY_SERVER'):
+                        case s if s.startswith('RESTART'):
+                            self.back_home()
+                            self.stop_thread = True
                         # Close connection, remove everything, and stop thread
-                        self.client.send('CLOSED_BY_SERVER_ACK'.encode('ascii'))
-                        self.client.close()
-                        self.is_connected = False
-                        print("Client is connected: False - CLOSED_BY_SERVER")
-                        self.back_home()
-                        break
-                    case s if s.startswith('CLOSED_BY_CLIENT_ACK'):
+                        case s if s.startswith('CLOSED_BY_SERVER'):
+                            self.client.send('CLOSED_BY_SERVER_ACK&'.encode('ascii'))
+                            self.client.close()
+                            self.is_connected = False
+                            print("Client is connected: False - CLOSED_BY_SERVER")
+                            self.back_home()
+                            self.stop_thread = True
                         # Stop thread
-                        print('CLOSED_BY_CLIENT_ACK')
-                        break
+                        case s if s.startswith('CLOSED_BY_CLIENT_ACK'):
+                            print('CLOSED_BY_CLIENT_ACK')
+                            self.stop_thread = True
 
             except TimeoutError:
                 pass
@@ -127,7 +132,7 @@ class Client:
     # ================== CLOSE CLIENT SOCKET ============================
     def close_connection(self):
         if self.is_connected:
-            self.client.send('CLOSED_BY_CLIENT'.encode('ascii'))
+            self.client.send('CLOSED_BY_CLIENT&'.encode('ascii'))
             self.receive_data_thread.join()
 
         self.client.close()
@@ -173,7 +178,9 @@ class Client:
     @mainthread
     def back_home(self):
         prog_bar_grid = MDApp.get_running_app().root.ids.prog_bar_grid
-        for child in prog_bar_grid.children:
+        children = prog_bar_grid.children.copy()
+        print(children)
+        for child in children:
             print(child)
             prog_bar_grid.remove_widget(child)
 

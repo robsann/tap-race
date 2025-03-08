@@ -1,29 +1,22 @@
 import random
-import time
 from kivy.lang import Builder
 from kivy.core.text import LabelBase
 from kivy.core.window import Window
-from kivy.properties import StringProperty
 from kivymd.app import MDApp
-from kivymd.uix.button import MDButton, MDButtonText, MDIconButton
+from kivymd.uix.button import MDButton, MDButtonText
 from kivymd.uix.dialog import MDDialog, MDDialogHeadlineText, MDDialogContentContainer
-from kivymd.uix.label import MDLabel
-from kivymd.uix.floatlayout import MDFloatLayout
 from kivymd.uix.boxlayout import MDBoxLayout
 from kivymd.uix.textfield import MDTextField, MDTextFieldHintText
 from kivymd.uix.menu import MDDropdownMenu
 from kivymd.uix.progressindicator import MDLinearProgressIndicator
-from server_class import Server
-from client_class import Client
+from server import Server
+from client import Client
 from myutils import snackbar, add_prog_bar
 
 
 """======================================================================
                     CUSTOM LAYOUT CLASSES USED IN MAIN
 ======================================================================"""
-# class IPText(MDFloatLayout):
-#     pass
-
 class MenuHeader(MDBoxLayout):
     """An instance of the class that will be added to the menu header."""
 
@@ -74,34 +67,31 @@ class MainApp(MDApp):
     ==================== START SERVER ===================================
     """
     def start_server(self):
-        if not self.server and not self.client:
-            self.server = Server()
-            if self.server.is_running:
-                self.server.menu_win = self.menu_win()
-                self.server.menu_lose = self.menu_lose()
-                self.root.ids.nickname_label.text = \
-                    f"Nickname: [color=#ff0000][b]{self.server.nickname}[/b][/color]"
-                self.single_player = False
-            else:
-                self.server = None
-        elif self.server:
+        if self.server:
             snackbar("Already running as server!")
-        else:
+        elif self.client:
             snackbar("Already running as client!")
-
+        else:
+            self.server = Server()
+            self.server.start_server()
+            self.server.menu_win = self.menu_win()
+            self.server.menu_lose = self.menu_lose()
+            self.root.ids.nickname_label.text = \
+                f"Nickname: [color=#ff0000][b]{self.server.nickname}[/b][/color]"
+            self.single_player = False
 
     """
     ==================== START CLIENT ===================================
     """
     def start_client(self):
-        if not self.server and not self.client:
+        if self.server:
+            snackbar("Already running as server!")
+        elif self.client:
+            snackbar("Already running as client!")
+        else:
             self.client = Client()
             self.server_ip_dialog = self.dialog_box()
             self.server_ip_dialog.open()
-        elif self.server:
-            snackbar("Already running as server!")
-        else:
-            snackbar("Already running as client!")
 
     # ================== Server IP Dialog Box ===========================
     def dialog_box(self):
@@ -184,7 +174,6 @@ class MainApp(MDApp):
                 self.root.ids.btn3.md_bg_color[3] = val
             case 4:
                 self.root.ids.btn4.md_bg_color[3] = val
-
 
     """
     ==================== UIX FUNCTIONS ==================================
@@ -279,6 +268,7 @@ class MainApp(MDApp):
                 self.root.ids.prog_bar_grid.add_widget(panel)
                 print(f"Adding P{i + 1} progress bar")
         elif self.client:
+            print(f"Client n_players: {self.client.n_players}")
             for i in range(self.client.n_players):
                 prog_bar, panel = add_prog_bar(num=i)
                 self.client.prog_bars.append(prog_bar)
@@ -293,6 +283,7 @@ class MainApp(MDApp):
     """
     ==================== PRESSING APP BUTTONS ===========================
     """
+    #  ================== ON DISPLAYING SCREEN A ========================
     def on_home_screen(self):
         if self.server:
             self.server = None
@@ -302,10 +293,9 @@ class MainApp(MDApp):
     # ================== ON START BUTTON ================================
     def on_start_btn(self):
         if self.server and self.server.clients:
-            self.server.broadcast(f'STARTED_BY_SERVER: {self.server.n_players}')
+            self.server.broadcast(f'STARTED_BY_SERVER: {self.server.n_players}&')
         elif self.client:
-            self.client.client.send('STARTED_BY_CLIENT'.encode('ascii'))
-            # self.client.client.send('GET_NPLAYERS'.encode('ascii'))
+            self.client.client.send('STARTED_BY_CLIENT&'.encode('ascii'))
         else:
             self.single_player = True
 
@@ -314,10 +304,10 @@ class MainApp(MDApp):
 
     # ================== ON PRESS THE GAME BUTTON =======================
     def on_press(self, btn_id: int):
-        # Uncolor button
+        # Remove button color intensity
         self.change_button_color(self.last_id, .2)
 
-        # Pressed correct button
+        # Pressing the correct button
         if btn_id == self.last_id:
             # Single Player
             if self.single_player:
@@ -328,39 +318,34 @@ class MainApp(MDApp):
                 # Verify if won
                 if self.count == 10:
                     self.menu_finish.open()
-
             # Server mode
             elif self.server and self.server.clients:
                 self.server.count += 1
                 self.server.update_counter(self.server.count, 0)
                 self.server.players_score[0] = self.server.count
-
                 # Send count to all clients
-                message = f"COUNT-{self.server.nickname}: {self.server.count}"
+                message = f"COUNT-{self.server.nickname}: {self.server.count}&"
                 self.server.broadcast(message)
                 print(f"To Client: {message}")
-
                 # Check if won
                 if self.server.count == 10:
                     self.server.menu_win.open()
-                    self.server.broadcast('LOSE')
-
+                    self.server.broadcast('LOSE&')
             # Client mode
             elif self.client:
                 self.client.count += 1
                 self.client.update_counter(self.client.count, self.client.idx)
                 self.client.players_score[self.client.idx] = self.client.count
-
                 # Send count to server
-                message = f"COUNT-{self.client.nickname}: {self.client.count}"
+                message = f"COUNT-{self.client.nickname}: {self.client.count}&"
                 self.client.client.send(message.encode('ascii'))
                 print(f"To Server: {message}")
-
                 # Check if won
                 if self.client.count == 10:
                     self.client.menu_win.open()
-                    self.client.client.send('LOSE'.encode('ascii'))        # TODO: modify for multiple clients
+                    self.client.client.send('LOSE&'.encode('ascii'))        # TODO: modify for multiple clients
 
+        # Generate next button with high intensity color
         self.random_id()
 
     # ================== ON BACK TO HOME: RETURN TO HOME SCREEN ========================
@@ -395,7 +380,7 @@ class MainApp(MDApp):
             self.reset_uix_values()
             self.server.menu_win.dismiss()
             self.server.menu_lose.dismiss()
-            self.server.broadcast('RESET')
+            self.server.broadcast('RESET&')
         elif self.client:
             self.client.count = 0
             self.reset_uix_values()
@@ -403,25 +388,24 @@ class MainApp(MDApp):
             self.client.menu_lose.dismiss()
             print(f"Client is connected: {self.client.is_connected}")
             if self.client.is_connected:
-                self.client.client.send('RESET'.encode('ascii'))
+                self.client.client.send('RESET&'.encode('ascii'))
 
     # ================== REMOVE PROGRESS BARS ===========================
     def remove_prog_bars(self):
         # Remove progress bars from MDGridLayout
         prog_bar_grid = self.root.ids.prog_bar_grid
-        for child in prog_bar_grid.children:
-            print(child)
+        children = prog_bar_grid.children.copy()
+        for child in children:
             prog_bar_grid.remove_widget(child)
 
         if self.server:
-            self.server.broadcast('RESTART')
+            self.server.broadcast('RESTART&')
             self.server.prog_bars = []
         elif self.client:
-            self.client.client.send('RESTART'.encode('ascii'))
+            self.client.client.send('RESTART&'.encode('ascii'))
             self.client.prog_bars = []
         else:
             self.prog_bars = []
-
 
     # ================== ON EXIT: CLOSE SERVER/CLIENT/APP ===============
     def on_exit(self):
@@ -443,8 +427,6 @@ class MainApp(MDApp):
     # ================== ON START: STARTING THE APP =====================
     def on_start(self):
         self.random_id()  # Color random button
-        # print(self.ip_addr)
-        # self.root.ids.ip_label.text = f"Your IP: {self.ip_addr}"
 
     # ================== BUILD THE LAYOUT ===============================
     def build(self):
