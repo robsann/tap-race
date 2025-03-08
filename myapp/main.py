@@ -294,13 +294,17 @@ class MainApp(MDApp):
     def on_start_btn(self):
         if self.server and self.server.clients:
             self.server.broadcast(f'STARTED_BY_SERVER: {self.server.n_players}&')
+            self.build_bars_panel()
+            self.root.current = "screen B"
         elif self.client:
             self.client.client.send('STARTED_BY_CLIENT&'.encode('ascii'))
         else:
             self.single_player = True
+            self.build_bars_panel()
+            self.root.current = "screen B"
 
-        self.build_bars_panel()
-        self.root.current = "screen B"
+        # self.build_bars_panel()
+        # self.root.current = "screen B"
 
     # ================== ON PRESS THE GAME BUTTON =======================
     def on_press(self, btn_id: int):
@@ -343,7 +347,8 @@ class MainApp(MDApp):
                 # Check if won
                 if self.client.count == 10:
                     self.client.menu_win.open()
-                    self.client.client.send('LOSE&'.encode('ascii'))        # TODO: modify for multiple clients
+                    # TODO: modify for multiple clients
+                    self.client.client.send('LOSE&'.encode('ascii'))
 
         # Generate next button with high intensity color
         self.random_id()
