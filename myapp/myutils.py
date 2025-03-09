@@ -34,7 +34,7 @@ def snackbar(message: str) -> None:
 
 # ================== PROGRESS BAR WIDGET ===============================
 def add_prog_bar(num: int) -> (MDLinearProgressIndicator, MDBoxLayout):
-    colors = ["#ff1717", "#17ff51", "#173aff", "#f3ff17"]
+    colors = ["#ff1717", "#17ff17", "#1717ff", "#ffff17", '#17ffff', '#8817ff']
     label = MDLabel(
         markup=True,
         text=f"[color={colors[num]}][b]P{num + 1}[/color][/b]",

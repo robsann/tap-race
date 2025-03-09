@@ -294,7 +294,11 @@ class MainApp(MDApp):
         elif self.client:
             self.client.client.send('STARTED_BY_CLIENT&'.encode('ascii'))
         else:
-            self.single_player = True
+            # Single Player
+            if self.server:
+                self.server.close_connection(close_clients=False)
+                self.server = None
+                self.single_player = True
             # Add progress bar and change to screen B
             prog_bar, panel = add_prog_bar(num=0)
             self.prog_bars.append(prog_bar)
@@ -399,7 +403,7 @@ class MainApp(MDApp):
             self.server.close_connection(close_clients=True)
             print("Server closed!")
         elif self.client:
-            self.client.close_connection(from_server=False)
+            self.client.close_connection(by_client=False)
             print("Client closed!")
 
         # Close app

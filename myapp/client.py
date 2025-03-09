@@ -109,13 +109,13 @@ class Client:
                         # Remove everything and stop thread
                         case s if s.startswith('RESTARTED_BY_SERVER'):
                             self.update_reset()
-                            self.close_connection(from_server=True)
+                            self.close_connection(by_client=True)
                             self.update_back_home()
                             self.stop_thread = True
                         # Remove everything and stop thread
                         case s if s.startswith('RESTARTED_BY_CLIENT'):
                             self.update_reset()
-                            self.close_connection(from_server=False)
+                            self.close_connection(by_client=True)
                             self.update_back_home()
                             self.stop_thread = True
                         # Close connection, remove everything, and stop thread
@@ -139,8 +139,8 @@ class Client:
 
 
     # ================== CLOSE CLIENT SOCKET ============================
-    def close_connection(self, from_server=False):
-        if self.is_connected and not from_server:
+    def close_connection(self, by_client=False):
+        if self.is_connected and not by_client:
             self.client.send('CLOSED_BY_CLIENT&'.encode('ascii'))
             self.receive_data_thread.join()
 

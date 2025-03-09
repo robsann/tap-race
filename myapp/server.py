@@ -134,7 +134,9 @@ class Server:
                         # Remove everything and stop thread
                         case s if s.startswith('RESTARTED_BY_CLIENT'):
                             self.broadcast(f"{msg}&")
+                            self.update_reset()
                             self.update_back_home()
+                            self.close_connection(close_clients=False)
                         # Close connection, remove everything, and stop thread
                         case s if s.startswith('CLOSED_BY_CLIENT'):
                             nickname = self.nicknames[self.clients.index(client)]
