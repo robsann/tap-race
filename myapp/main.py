@@ -323,7 +323,7 @@ class MainApp(MDApp):
                 if self.count == 10:
                     self.menu_finish.open()
             # For server mode
-            elif self.server and self.server.clients:
+            elif self.server and not self.single_player:
                 self.server.count += 1
                 self.server.update_counter(self.server.count, 0)
                 self.server.players_score[0] = self.server.count

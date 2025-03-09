@@ -143,10 +143,8 @@ class Server:
                             self.clients.remove(client)
                             self.nicknames.remove(nickname)
                             client.send('CLOSED_BY_CLIENT_ACK&'.encode('ascii'))
-                            self.close_connection(close_clients=False)
                             self.update_snackbar(f"{nickname} disconnected!")
                             print(f"{nickname} disconnected!")
-                            self.stop_thread = True
                         # Acknowledge from client
                         case s if s.startswith('CLOSED_BY_SERVER_ACK'):
                             client.close()
