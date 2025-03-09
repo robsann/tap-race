@@ -2,6 +2,12 @@
 
 This is a simple multiplayer game for Android, developed in Python using Kivy. The primary objective of the project was to gain experience in device comunnication using the socket library, manage concurrent threads with the threading module, design the frontend with KivyMD, and utilize Buildozer to create the `.apk` file. 
 
+## Screenshots
+
+<p align="center">
+<img src="images/screenshot.png">
+</p>
+
 ## Environment Set Up:
 
 1. Install dependencies:
