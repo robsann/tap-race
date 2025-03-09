@@ -2,6 +2,7 @@
 myapp/.buildozer/
 myapp/__pycache__/
 myapp/bin/
+utils/
 main_summary.py
 server_summary.py
 client_summary.py
