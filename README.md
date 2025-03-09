@@ -10,7 +10,7 @@ This is a simple multiplayer game for Android, developed in Python using Kivy. T
 
 ## Environment Set Up:
 
-1. Install dependencies:
+1. Installing dependencies:
     ```bash
     $ pip install kivy
     $ pip install https://github.com/kivymd/KivyMD/archive/master.zip
