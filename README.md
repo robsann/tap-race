@@ -67,3 +67,7 @@ This is a simple multiplayer game for Android, developed in Python using Kivy. T
     $ buildozer android clean
     $ buildozer -v android debug 
     ```
+
+## APK File
+
+The `.apk` file can be downloaded [here](https://github.com/robsann/tap-race/blob/main/myapp/bin/taprace-0.1-arm64-v8a_armeabi-v7a-debug.apk).
