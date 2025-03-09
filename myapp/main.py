@@ -249,31 +249,30 @@ class MainApp(MDApp):
     # ================== RESET VALUES ON THE SCREEN =====================
     def reset_uix_values(self):
         self.root.ids.count_label.text = "0"
+        # Reset progress bar values for server
         if self.server:
             for i in range(self.server.n_players):
                 self.server.prog_bars[i].value = 0
+        # Reset progress bar values for client
         elif self.client:
             for i in range(self.client.n_players):
                 self.client.prog_bars[i].value = 0
+        # Reset progress bar value for single player
         else:
             for i in range(len(self.prog_bars)):
                 self.prog_bars[i].value = 0
 
     # ================== REMOVE PROGRESS BARS ===========================
     def remove_prog_bars(self):
+        # Remove progress bars from MDGridLayout
+        prog_bar_grid = self.root.ids.prog_bar_grid
+        children = prog_bar_grid.children.copy()
+        for child in children:
+            prog_bar_grid.remove_widget(child)
+
         if self.server:
-            # Remove progress bars from MDGridLayout
-            prog_bar_grid = self.root.ids.prog_bar_grid
-            children = prog_bar_grid.children.copy()
-            for child in children:
-                prog_bar_grid.remove_widget(child)
             self.server.prog_bars = []
         else:
-            # Remove progress bars from MDGridLayout
-            prog_bar_grid = self.root.ids.prog_bar_grid
-            children = prog_bar_grid.children.copy()
-            for child in children:
-                prog_bar_grid.remove_widget(child)
             self.prog_bars = []
 
     """
@@ -288,13 +287,15 @@ class MainApp(MDApp):
 
     # ================== ON START BUTTON ================================
     def on_start_btn(self):
+        # For server mode
         if self.server and self.server.clients:
             self.server.broadcast(f'STARTED_BY_SERVER: {self.server.n_players}&')
             self.server.start_game_screen()
+        # For client mode
         elif self.client:
             self.client.client.send('STARTED_BY_CLIENT&'.encode('ascii'))
+        # For single player mode
         else:
-            # Single Player
             if self.server:
                 self.server.close_connection(close_clients=False)
                 self.server = None
@@ -305,9 +306,6 @@ class MainApp(MDApp):
             self.root.ids.prog_bar_grid.add_widget(panel)
             self.root.current = "screen B"
 
-        # self.build_bars_panel()
-        # self.root.current = "screen B"
-
     # ================== ON PRESS THE GAME BUTTON =======================
     def on_press(self, btn_id: int):
         # Remove button color intensity
@@ -315,7 +313,7 @@ class MainApp(MDApp):
 
         # Pressing the correct button
         if btn_id == self.last_id:
-            # Single Player
+            # For single player mode
             if self.single_player:
                 self.count += 1
                 # Update counter and progress bar
@@ -324,7 +322,7 @@ class MainApp(MDApp):
                 # Verify if won
                 if self.count == 10:
                     self.menu_finish.open()
-            # Server mode
+            # For server mode
             elif self.server and self.server.clients:
                 self.server.count += 1
                 self.server.update_counter(self.server.count, 0)
@@ -337,7 +335,7 @@ class MainApp(MDApp):
                 if self.server.count == 10:
                     self.server.menu_win.open()
                     self.server.broadcast('LOSE&')
-            # Client mode
+            # For client mode
             elif self.client:
                 # Update counter
                 self.client.count += 1
@@ -356,11 +354,13 @@ class MainApp(MDApp):
 
     # ================== ON RESET: RESET COUNTER ========================
     def on_reset(self):
+        # Reset for single player mode
         if self.single_player:
             self.count = 0
             self.reset_uix_values()
             self.top_menu.dismiss()
             self.menu_finish.dismiss()
+        # Reset for server mode
         elif self.server:
             self.server.count = 0
             self.reset_uix_values()
@@ -368,6 +368,7 @@ class MainApp(MDApp):
             self.server.menu_win.dismiss()
             self.server.menu_lose.dismiss()
             self.server.broadcast('RESET&')
+        # Reset for client mode
         elif self.client:
             self.top_menu.dismiss()
             if self.client.is_connected:
@@ -375,14 +376,14 @@ class MainApp(MDApp):
 
     # ================== ON BACK TO HOME: RETURN TO HOME SCREEN ========================
     def on_back_home(self):
-        # Terminate single player
+        # Terminate for single player mode
         if self.single_player:
             self.on_reset()
             self.remove_prog_bars()
             self.top_menu.dismiss()
             self.root.ids.nickname_label.text = ""
             self.root.current = "screen A"
-        # Terminate server
+        # Terminate for  server mode
         elif self.server:
             self.server.broadcast('RESTARTED_BY_SERVER&')
             self.server.update_reset()
@@ -390,7 +391,7 @@ class MainApp(MDApp):
             self.server.close_connection(close_clients=False)
             self.server = None
             self.top_menu.dismiss()
-        # Terminate client
+        # Terminate for client mode
         elif self.client:
             self.top_menu.dismiss()
             if self.client.is_connected:
@@ -399,9 +400,11 @@ class MainApp(MDApp):
 
     # ================== ON EXIT: CLOSE SERVER/CLIENT/APP ===============
     def on_exit(self):
+        # Close Server
         if self.server:
             self.server.close_connection(close_clients=True)
             print("Server closed!")
+        # Close client
         elif self.client:
             self.client.close_connection(by_client=False)
             print("Client closed!")
