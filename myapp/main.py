@@ -416,13 +416,14 @@ class MainApp(MDApp):
     """
     # ================== ON START: STARTING THE APP =====================
     def on_start(self):
-        self.random_id()  # Color random button
+        # Generate random id for the first highlighted button
+        self.random_id()
 
     # ================== BUILD THE LAYOUT ===============================
     def build(self):
         self.theme_cls.theme_style = "Dark"
         self.theme_cls.primary_palette = "Orange"
-        Window.size = (300, 600)
+        Window.size = (300, 600)    # Comment this when generating the APK file
 
         return self.screen
 
