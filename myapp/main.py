@@ -423,7 +423,9 @@ class MainApp(MDApp):
     def build(self):
         self.theme_cls.theme_style = "Dark"
         self.theme_cls.primary_palette = "Orange"
-        Window.size = (300, 600)    # Comment this when generating the APK file
+
+        # Comment this line when generating the APK file
+        Window.size = (300, 600)
 
         return self.screen
 
