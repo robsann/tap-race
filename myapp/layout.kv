@@ -1,12 +1,6 @@
 ##########################################################################
 # ========================= CLASS DEFINITION =========================== #
 ##########################################################################
-
-#<IPText>
-#    MDTextField:
-#        id: ip_text_field
-#        pos_hint: {'center_x': .5, 'center_y': .5}
-
 <MDIconButton>
     icon: "alien"
     style: "tonal"
@@ -30,7 +24,6 @@
 <MenuWin>
     spacing: "12dp"
     padding: "8dp"
-#    adaptive_height: True
     adaptive_size: True
 
     MDIconButton:
@@ -49,7 +42,6 @@
 <MenuLose>
     spacing: "12dp"
     padding: "8dp"
-#    adaptive_height: True
     adaptive_size: True
 
     MDIconButton:
@@ -69,17 +61,14 @@
 ##########################################################################
 # =========================== SCREEM MANAGER =========================== #
 ##########################################################################
-
 MDScreenManager:
 
     ##########################################################################
     # =========================== SCREEN A ================================= #
     ##########################################################################
-
     MDScreen:
         name: "screen A"
         size_hint: 1, 1
-        # md_bg_color: [1,1,1,1]
         on_enter: app.on_home_screen()
 
         MDFloatLayout:
@@ -147,7 +136,6 @@ MDScreenManager:
     ##########################################################################
     # ============================ SCREEN B ================================ #
     ##########################################################################
-
     MDScreen:
         name: "screen B"
         md_bg_color: "#6fb856"
@@ -156,7 +144,6 @@ MDScreenManager:
             orientation: "vertical"
             size_hint: None, None
             size: root.width, root.height
-            # padding: 0, "19dp", 0, 0
 
             # ========== MDTopAppBar ==========
             MDTopAppBar:
@@ -166,7 +153,6 @@ MDScreenManager:
                     theme_font_size: "Custom"
                     font_size: "48sp"
                     font_style: "nasalization"
-                    #pos_hint: {"center_x": .5}
 
                 MDTopAppBarTrailingButtonContainer:
 
@@ -177,8 +163,6 @@ MDScreenManager:
 
             # ========== Progress bars ==========
             MDGridLayout:
-#            MDBoxLayout:
-#                orientation: "vertical"
                 id: prog_bar_grid
                 md_bg_color: "#4e7a4f"
                 cols: 1
@@ -199,7 +183,6 @@ MDScreenManager:
                     font_style: "Display"
                     adaptive_size: True
                     pos_hint: {"center_x": .5, "center_y": .5}
-
 
             # ========== Buttons ==========
             MDFloatLayout:

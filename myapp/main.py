@@ -99,7 +99,7 @@ class MainApp(MDApp):
             MDDialogHeadlineText(text="Enter Server IP"),
             MDDialogContentContainer(
                 MDBoxLayout(
-                    MDTextField(                                    # TODO: text_field
+                    MDTextField(
                         MDTextFieldHintText(text="Server IP"),
                         id="text_field",
                         mode="outlined",
@@ -278,13 +278,6 @@ class MainApp(MDApp):
     """
     ==================== PRESSING APP BUTTONS ===========================
     """
-    #  ================== ON DISPLAYING SCREEN A ========================
-    def on_home_screen(self):
-        if self.server:
-            self.server = None
-        elif self.client:
-            self.client = None
-
     # ================== ON START BUTTON ================================
     def on_start_btn(self):
         # For server mode
@@ -413,15 +406,24 @@ class MainApp(MDApp):
         self.stop()
         print("App closed!")
 
+    """
+    ==================== ON START/DISPLAYING SCREEN =====================
+    """
+    #  ================== ON DISPLAYING SCREEN A ========================
+    def on_home_screen(self):
+        if self.server:
+            self.server = None
+        elif self.client:
+            self.client = None
 
-    """
-    ==================== BUILDING APP ===================================
-    """
     # ================== ON START: STARTING THE APP =====================
     def on_start(self):
         # Generate random id for the first highlighted button
         self.random_id()
 
+    """
+    ==================== BUILDING APP ===================================
+    """
     # ================== BUILD THE LAYOUT ===============================
     def build(self):
         self.theme_cls.theme_style = "Dark"
