@@ -14,24 +14,21 @@ from client import Client
 from myutils import snackbar, add_prog_bar
 
 
-"""======================================================================
-                    CUSTOM LAYOUT CLASSES USED IN MAIN
-======================================================================"""
 class MenuHeader(MDBoxLayout):
     """An instance of the class that will be added to the menu header."""
+    pass
 
 
 class MenuWin(MDBoxLayout):
     """An instance of the class that will be added to the menu header."""
+    pass
 
 
 class MenuLose(MDBoxLayout):
     """An instance of the class that will be added to the menu header."""
+    pass
 
 
-"""======================================================================
-                            MAIN CLASS
-======================================================================"""
 class MainApp(MDApp):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -53,20 +50,13 @@ class MainApp(MDApp):
         # Create screen object
         self.screen = Builder.load_file('layout.kv')
 
-        # Define menu items
+        # Define menu items and create menus
         self.menu_items = self.menu_items()
-
-        # Create top bar menu object
         self.top_menu = self.menu_header()
-
-        # Create menu displayed at finish
         self.menu_finish = self.menu_win()
 
-
-    """
-    ==================== START SERVER ===================================
-    """
     def start_server(self):
+        """Start the server if not already running as server or client."""
         if self.server:
             snackbar("Already running as server!")
         elif self.client:
@@ -80,10 +70,8 @@ class MainApp(MDApp):
                 f"Nickname: [color=#ff0000][b]{self.server.nickname}[/b][/color]"
             self.single_player = False
 
-    """
-    ==================== START CLIENT ===================================
-    """
     def start_client(self):
+        """Start the client if not already running as server or client."""
         if self.server:
             snackbar("Already running as server!")
         elif self.client:
@@ -93,8 +81,8 @@ class MainApp(MDApp):
             self.server_ip_dialog = self.dialog_box()
             self.server_ip_dialog.open()
 
-    # ================== Server IP Dialog Box ===========================
     def dialog_box(self):
+        """Create a dialog box for server IP input."""
         dialog = MDDialog(
             MDDialogHeadlineText(text="Enter Server IP"),
             MDDialogContentContainer(
@@ -129,19 +117,19 @@ class MainApp(MDApp):
         )
         return dialog
 
-    # ================== CONNECT BUTTON =================================
     def dialog_connect(self):
+        """Handle connect button in dialog."""
         self.client.server_addr = self.server_ip_dialog.get_ids().text_field.text
         self.server_ip_dialog.dismiss()
         self.client_connect()
 
-    # ================== CLOSE BUTTON ===================================
     def dialog_close(self):
+        """Handle close button in dialog."""
         self.server_ip_dialog.dismiss()
         self.client = None
 
-    # ================== CONNECT CLIENT TO SERVER =======================
     def client_connect(self):
+        """Connect client to server using provided IP."""
         print(f"Server IP provided: {self.client.server_addr}")
         self.client.start_client()
         if self.client.is_connected:
@@ -155,17 +143,14 @@ class MainApp(MDApp):
             self.client = None
             snackbar("Connection refused!")
 
-    """
-    ==================== GAME FUNCTIONS =================================
-    """
-    # ================== RANDOMLY SELECT NEXT HIGHLIGHTED BUTTON ========
     def random_id(self):
+        """Randomly select the next highlighted button."""
         btn_id = random.sample(range(1, 5), 1)[0]
         self.last_id = btn_id
         self.change_button_color(btn_id, 1)
 
-    # ================== CHANGE BUTTON COLOR ============================
     def change_button_color(self, btn_id: int, val: float):
+        """Change the color intensity of a button."""
         match btn_id:
             case 1:
                 self.root.ids.btn1.md_bg_color[3] = val
@@ -176,11 +161,8 @@ class MainApp(MDApp):
             case 4:
                 self.root.ids.btn4.md_bg_color[3] = val
 
-    """
-    ==================== UIX FUNCTIONS ==================================
-    """
-    # ================== ADD NASALIZATION FONT ==========================
     def add_nasa_font(self):
+        """Register and configure the nasalization font."""
         LabelBase.register(
             name="nasalization",
             fn_regular="nasalization.ttf",
@@ -198,8 +180,8 @@ class MainApp(MDApp):
             },
         }
 
-    # ================== DEFINE MENU ITEMS ==============================
     def menu_items(self):
+        """Define the menu items."""
         menu_items = [
             {
                 "text": "Back to Home",
@@ -217,8 +199,8 @@ class MainApp(MDApp):
         ]
         return menu_items
 
-    # ================== CREATE TOP BAR MENU OBJECT =====================
     def menu_header(self):
+        """Create the top bar menu object."""
         menu = MDDropdownMenu(
             header_cls=MenuHeader(),
             caller=self.screen.ids.menu_btn,
@@ -226,8 +208,8 @@ class MainApp(MDApp):
         )
         return menu
 
-    # ================== DEFINE MENU WIN ================================
     def menu_win(self):
+        """Create the win menu."""
         menu_win = MDDropdownMenu(
             header_cls=MenuWin(),
             caller=self.screen.ids.count_label,
@@ -236,8 +218,8 @@ class MainApp(MDApp):
         )
         return menu_win
 
-    # ================== DEFINE MENU LOSE ===============================
     def menu_lose(self):
+        """Create the lose menu."""
         menu_lose = MDDropdownMenu(
             header_cls=MenuLose(),
             caller=self.screen.ids.count_label,
@@ -246,25 +228,23 @@ class MainApp(MDApp):
         )
         return menu_lose
 
-    # ================== RESET VALUES ON THE SCREEN =====================
     def reset_uix_values(self):
+        """Reset values on the screen."""
         self.root.ids.count_label.text = "0"
-        # Reset progress bar values for server
+
+        # Reset progress bar values based on mode
         if self.server:
             for i in range(self.server.n_players):
                 self.server.prog_bars[i].value = 0
-        # Reset progress bar values for client
         elif self.client:
             for i in range(self.client.n_players):
                 self.client.prog_bars[i].value = 0
-        # Reset progress bar value for single player
         else:
             for i in range(len(self.prog_bars)):
                 self.prog_bars[i].value = 0
 
-    # ================== REMOVE PROGRESS BARS ===========================
     def remove_prog_bars(self):
-        # Remove progress bars from MDGridLayout
+        """Remove progress bars from the grid layout."""
         prog_bar_grid = self.root.ids.prog_bar_grid
         children = prog_bar_grid.children.copy()
         for child in children:
@@ -275,11 +255,8 @@ class MainApp(MDApp):
         else:
             self.prog_bars = []
 
-    """
-    ==================== PRESSING APP BUTTONS ===========================
-    """
-    # ================== ON START BUTTON ================================
     def on_start_btn(self):
+        """Handle start button press."""
         # For server mode
         if self.server and self.server.clients:
             self.server.broadcast(f'STARTED_BY_SERVER: {self.server.n_players}&')
@@ -293,14 +270,15 @@ class MainApp(MDApp):
                 self.server.close_connection(close_clients=False)
                 self.server = None
                 self.single_player = True
+
             # Add progress bar and change to screen B
             prog_bar, panel = add_prog_bar(num=0)
             self.prog_bars.append(prog_bar)
             self.root.ids.prog_bar_grid.add_widget(panel)
             self.root.current = "screen B"
 
-    # ================== ON PRESS THE GAME BUTTON =======================
     def on_press(self, btn_id: int):
+        """Handle game button press."""
         # Remove button color intensity
         self.change_button_color(self.last_id, .2)
 
@@ -345,8 +323,8 @@ class MainApp(MDApp):
         # Generate next button with high intensity color
         self.random_id()
 
-    # ================== ON RESET: RESET COUNTER ========================
     def on_reset(self):
+        """Reset counter and UI values."""
         # Reset for single player mode
         if self.single_player:
             self.count = 0
@@ -367,16 +345,16 @@ class MainApp(MDApp):
             if self.client.is_connected:
                 self.client.client.send('RESET&'.encode('ascii'))
 
-    # ================== ON BACK TO HOME: RETURN TO HOME SCREEN ========================
     def on_back_home(self):
-        # Terminate for single player mode
+        """Return to home screen."""
+        # For single player mode
         if self.single_player:
             self.on_reset()
             self.remove_prog_bars()
             self.top_menu.dismiss()
             self.root.ids.nickname_label.text = ""
             self.root.current = "screen A"
-        # Terminate for  server mode
+        # For  server mode
         elif self.server:
             self.server.broadcast('RESTARTED_BY_SERVER&')
             self.server.update_reset()
@@ -384,15 +362,15 @@ class MainApp(MDApp):
             self.server.close_connection(close_clients=False)
             self.server = None
             self.top_menu.dismiss()
-        # Terminate for client mode
+        # For client mode
         elif self.client:
             self.top_menu.dismiss()
             if self.client.is_connected:
                 self.client.client.send('RESTARTED_BY_CLIENT&'.encode('ascii'))
             self.client = None
 
-    # ================== ON EXIT: CLOSE SERVER/CLIENT/APP ===============
     def on_exit(self):
+        """Close server/client/app."""
         # Close Server
         if self.server:
             self.server.close_connection(close_clients=True)
@@ -406,18 +384,15 @@ class MainApp(MDApp):
         self.stop()
         print("App closed!")
 
-    """
-    ==================== ON START/DISPLAYING SCREEN =====================
-    """
-    #  ================== ON DISPLAYING SCREEN A ========================
     def on_home_screen(self):
+        """Reset server/client when returning to home screen."""
         if self.server:
             self.server = None
         elif self.client:
             self.client = None
 
-    # ================== ON START: STARTING THE APP =====================
     def on_start(self):
+        """Run on app initialization."""
         # Generate random id for the first highlighted button
         self.random_id()
 
@@ -426,6 +401,7 @@ class MainApp(MDApp):
     """
     # ================== BUILD THE LAYOUT ===============================
     def build(self):
+        """Build the app layout."""
         self.theme_cls.theme_style = "Dark"
         self.theme_cls.primary_palette = "Orange"
 
@@ -435,4 +411,5 @@ class MainApp(MDApp):
         return self.screen
 
 
-MainApp().run()
+if __name__ == "__main__":
+    MainApp().run()
