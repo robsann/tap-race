@@ -33,7 +33,7 @@ def snackbar(message: str) -> None:
     ).open()
 
 # ================== PROGRESS BAR WIDGET ===============================
-def add_prog_bar(num: int) -> (MDLinearProgressIndicator, MDBoxLayout):
+def add_prog_bar(num: int, max_score: int) -> (MDLinearProgressIndicator, MDBoxLayout):
     colors = ["#ff1717", "#17ff17", "#1717ff", "#ffff17", '#17ffff', '#8817ff']
     label = MDLabel(
         markup=True,
@@ -45,6 +45,7 @@ def add_prog_bar(num: int) -> (MDLinearProgressIndicator, MDBoxLayout):
     )
     prog_bar = MDLinearProgressIndicator(
         value=0,
+        max=max_score,
         size_hint_y=None,
         height="10dp",
         pos_hint={'center_x': .5, 'center_y': .5},

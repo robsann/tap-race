@@ -115,8 +115,13 @@ class Server:
 
     def process_message(self, client, msg):
         """Process incoming messages based on their type."""
+        if msg.startswith('MAX_SCORE'):
+            max_score = int(msg[11:])
+            self.app.max_score = max_score
+            self.broadcast(f'MAX_SCORE: {max_score}')
+
         # Start game
-        if msg.startswith('STARTED_BY_CLIENT'):
+        elif msg.startswith('STARTED_BY_CLIENT'):
             self.broadcast(f'STARTED_BY_CLIENT&')
             self.start_game_screen()
 
@@ -190,7 +195,7 @@ class Server:
     def start_game_screen(self):
         """Add progress bar widgets and switch to game screen."""
         for i in range(self.n_players):
-            prog_bar, panel = add_prog_bar(num=i)
+            prog_bar, panel = add_prog_bar(num=i, max_score=self.app.max_score)
             self.prog_bars.append(prog_bar)
             self.app.root.ids.prog_bar_grid.add_widget(panel)
 
@@ -205,7 +210,7 @@ class Server:
     @mainthread
     def update_counter(self, count: int, idx: int):
         """Update the progress bar and counter label."""
-        self.prog_bars[idx].value = count * 10
+        self.prog_bars[idx].value = count
         if idx == 0:
             self.app.root.ids.count_label.text = str(count)
 

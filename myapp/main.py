@@ -40,6 +40,7 @@ class MainApp(MDApp):
         self.prog_bars: list[MDLinearProgressIndicator] = []
 
         self.count: int = 0
+        self.max_score = 10
         self.last_id: int = 0
         self.single_player: bool = True
         self.stop_flow = True
@@ -51,6 +52,9 @@ class MainApp(MDApp):
         self.screen = Builder.load_file('layout.kv')
 
         # Define menu items and create menus
+        self.menu_items_settings = self.settings_menu_items()
+        self.settings = self.settings_menu()
+
         self.menu_items = self.menu_items()
         self.top_menu = self.menu_header()
         self.menu_finish = self.menu_win()
@@ -180,6 +184,28 @@ class MainApp(MDApp):
             },
         }
 
+    def set_max_score(self, score: int):
+        self.max_score = score
+        self.settings.dismiss()
+        snackbar(f"Max Score: {score}")
+
+    def settings_menu_items(self):
+        menu_items = [
+            {
+                "text": f"Max Score: {i}",
+                "on_release": lambda score=i: self.set_max_score(score)
+            } for i in [10, 25, 50, 100]
+        ]
+        return menu_items
+
+    def settings_menu(self):
+        menu = MDDropdownMenu(
+            # header_cls=MenuHeader(),
+            caller=self.screen.ids.settings,
+            items=self.menu_items_settings,
+        )
+        return menu
+
     def menu_items(self):
         """Define the menu items."""
         menu_items = [
@@ -255,14 +281,19 @@ class MainApp(MDApp):
         else:
             self.prog_bars = []
 
+    """
+    ==================== APP EVENTS =====================================
+    """
     def on_start_btn(self):
         """Handle start button press."""
         # For server mode
         if self.server and self.server.clients:
-            self.server.broadcast(f'STARTED_BY_SERVER: {self.server.n_players}&')
+            self.server.broadcast(f'MAX_SCORE: {self.max_score}&')
+            self.server.broadcast(f'STARTED_BY_SERVER&')
             self.server.start_game_screen()
         # For client mode
         elif self.client:
+            self.client.client.send(f"MAX_SCORE: {self.max_score}&".enconde('ascii'))
             self.client.client.send('STARTED_BY_CLIENT&'.encode('ascii'))
         # For single player mode
         else:
@@ -272,7 +303,7 @@ class MainApp(MDApp):
                 self.single_player = True
 
             # Add progress bar and change to screen B
-            prog_bar, panel = add_prog_bar(num=0)
+            prog_bar, panel = add_prog_bar(num=0, max_score=self.max_score)
             self.prog_bars.append(prog_bar)
             self.root.ids.prog_bar_grid.add_widget(panel)
             self.root.current = "screen B"
@@ -282,6 +313,8 @@ class MainApp(MDApp):
         # Remove button color intensity
         self.change_button_color(self.last_id, .2)
 
+        print(f"Max score: {self.max_score}")
+
         # Pressing the correct button
         if btn_id == self.last_id:
             # For single player mode
@@ -289,9 +322,9 @@ class MainApp(MDApp):
                 self.count += 1
                 # Update counter and progress bar
                 self.root.ids.count_label.text = str(self.count)
-                self.prog_bars[0].value = self.count * 10
+                self.prog_bars[0].value = self.count
                 # Verify if won
-                if self.count == 10:
+                if self.count == self.max_score:
                     self.menu_finish.open()
             # For server mode
             elif self.server and not self.single_player:
@@ -303,7 +336,7 @@ class MainApp(MDApp):
                 self.server.broadcast(message)
                 print(f"To Client: {message}")
                 # Check if won
-                if self.server.count == 10:
+                if self.server.count == self.max_score:
                     self.server.menu_win.open()
                     self.server.broadcast('LOSE&')
             # For client mode
@@ -315,9 +348,8 @@ class MainApp(MDApp):
                 self.client.client.send(message.encode('ascii'))
                 print(f"To Server: {message}")
                 # Check if won
-                if self.client.count == 10:
+                if self.client.count == self.max_score:
                     self.client.menu_win.open()
-                    # TODO: modify for multiple clients
                     self.client.client.send('LOSE&'.encode('ascii'))
 
         # Generate next button with high intensity color
@@ -397,9 +429,8 @@ class MainApp(MDApp):
         self.random_id()
 
     """
-    ==================== BUILDING APP ===================================
+    ==================== BUILD APP ======================================
     """
-    # ================== BUILD THE LAYOUT ===============================
     def build(self):
         """Build the app layout."""
         self.theme_cls.theme_style = "Dark"

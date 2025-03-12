@@ -91,6 +91,11 @@ class Client:
             print(f"Client connected as {self.nickname}")
             self.update_snackbar()
 
+        # Max score
+        elif msg.startswith('MAX_SCORE'):
+            max_score = int(msg[11:])
+            self.app.max_score = max_score
+
         # Start game
         elif msg.startswith('STARTED_BY_SERVER') or msg.startswith('STARTED_BY_CLIENT'):
             self.players_score = [0 for _ in range(self.n_players)]
@@ -110,7 +115,7 @@ class Client:
 
         # Open lose menu
         elif msg.startswith('LOSE'):
-            if self.count < 10:
+            if self.count < self.app.max_score:
                 self.update_menu_lose()
 
         # Reset score and progress bars
@@ -151,7 +156,7 @@ class Client:
     def start_game_screen(self):
         """Add progress bar widgets and switch to game screen."""
         for i in range(self.n_players):
-            prog_bar, panel = add_prog_bar(num=i)
+            prog_bar, panel = add_prog_bar(num=i, max_score=self.app.max_score)
             self.prog_bars.append(prog_bar)
             self.app.root.ids.prog_bar_grid.add_widget(panel)
         # Change to game screen (screen B)
@@ -165,7 +170,7 @@ class Client:
     @mainthread
     def update_counter(self, count, idx):
         """Update progress bar and score display."""
-        self.prog_bars[idx].value = count * 10
+        self.prog_bars[idx].value = count
         if idx == self.idx:
             self.app.root.ids.count_label.text = str(count)
 
