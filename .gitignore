@@ -1,8 +1,0 @@
-.gitignore
-.idea/
-myapp/.buildozer/
-myapp/__pycache__/
-utils/
-main_summary.py
-server_summary.py
-client_summary.py
