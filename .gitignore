@@ -1,3 +1,4 @@
+.gitignore
 .idea/
 myapp/.buildozer/
 myapp/__pycache__/
