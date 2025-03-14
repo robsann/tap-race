@@ -437,9 +437,6 @@ class MainApp(MDApp):
         # Generate random id for the first highlighted button
         self.random_id()
 
-    """
-    ==================== BUILD APP ======================================
-    """
     def build(self):
         """Build the app layout."""
         self.theme_cls.theme_style = "Dark"
