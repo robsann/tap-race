@@ -2,6 +2,7 @@ import random
 from kivy.lang import Builder
 from kivy.core.text import LabelBase
 from kivy.core.window import Window
+from kivy.utils import platform
 from kivymd.app import MDApp
 from kivymd.uix.button import MDButton, MDButtonText
 from kivymd.uix.dialog import MDDialog, MDDialogHeadlineText, MDDialogContentContainer
@@ -12,6 +13,14 @@ from kivymd.uix.progressindicator import MDLinearProgressIndicator
 from server import Server
 from client import Client
 from myutils import snackbar, add_prog_bar
+
+
+if platform == 'android' or platform == 'ios':
+   # Mobile-specific settings
+   pass
+else:
+   # Desktop-specific settings
+   Window.size = (300, 600)
 
 
 class MenuHeader(MDBoxLayout):
@@ -293,7 +302,7 @@ class MainApp(MDApp):
             self.server.start_game_screen()
         # For client mode
         elif self.client:
-            self.client.client.send(f"MAX_SCORE: {self.max_score}&".enconde('ascii'))
+            self.client.client.send(f'MAX_SCORE: {self.max_score}&'.encode('ascii'))
             self.client.client.send('STARTED_BY_CLIENT&'.encode('ascii'))
         # For single player mode
         else:
@@ -435,9 +444,6 @@ class MainApp(MDApp):
         """Build the app layout."""
         self.theme_cls.theme_style = "Dark"
         self.theme_cls.primary_palette = "Orange"
-
-        # Comment this line when generating the APK file
-        Window.size = (300, 600)
 
         return self.screen
 

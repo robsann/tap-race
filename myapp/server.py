@@ -118,7 +118,7 @@ class Server:
         if msg.startswith('MAX_SCORE'):
             max_score = int(msg[11:])
             self.app.max_score = max_score
-            self.broadcast(f'MAX_SCORE: {max_score}')
+            self.broadcast(f"{msg}&")
 
         # Start game
         elif msg.startswith('STARTED_BY_CLIENT'):
